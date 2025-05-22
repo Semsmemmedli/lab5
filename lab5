@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="UTF-8">
+  <title>JSON-dan Render və Redaktə</title>
+  <style>
+    body { font-family: sans-serif; background: #f5f5f5; padding: 30px; }
+    form, .display { background: #fff; padding: 20px; border-radius: 8px; max-width: 500px; margin: auto; margin-bottom: 20px; }
+    input, textarea { width: 100%; margin-top: 10px; padding: 8px; }
+    button { margin-top: 15px; padding: 10px; width: 100%; background: #007BFF; color: #fff; border: none; }
+    .error { color: red; font-size: 14px; }
+    .edit-btn, .reset-btn { margin-top: 10px; background: #28a745; }
+  </style>
+</head>
+<body>
+
+  <div class="display" id="profileView"></div>
+
+  <form id="editForm" style="display:none">
+    <input id="name" placeholder="Ad" required><div id="nameErr" class="error"></div>
+    <input id="email" placeholder="Email" required><div id="emailErr" class="error"></div>
+    <input id="date" type="date" required>
+    <textarea id="desc" placeholder="Təsvir" required></textarea>
+    <button type="button" id="save">Yadda Saxla</button>
+    <button type="button" class="reset-btn" id="reset">Hamısını Sıfırla</button>
+  </form>
+
+  <script>
+    const name = document.getElementById("name");
+    const email = document.getElementById("email");
+    const date = document.getElementById("date");
+    const desc = document.getElementById("desc");
+    const nameErr = document.getElementById("nameErr");
+    const emailErr = document.getElementById("emailErr");
+    const form = document.getElementById("editForm");
+    const view = document.getElementById("profileView");
+
+    async function loadData() {
+      let data = JSON.parse(localStorage.getItem("form"));
+      if (!data) {
+        const response = await fetch("data.json");
+        data = await response.json();
+        localStorage.setItem("form", JSON.stringify(data));
+      }
+      renderData(data);
+    }
+
+    function renderData(data) {
+      view.innerHTML = `
+        <p><strong>Ad:</strong> ${data.name}</p>
+        <p><strong>Email:</strong> ${data.email}</p>
+        <p><strong>Tarix:</strong> ${data.date}</p>
+        <p><strong>Təsvir:</strong> ${data.desc}</p>
+        <button class="edit-btn" onclick="editMode()">Düzəliş Et</button>
+      `;
+    }
+
+    function editMode() {
+      const data = JSON.parse(localStorage.getItem("form"));
+      name.value = data.name;
+      email.value = data.email;
+      date.value = data.date;
+      desc.value = data.desc;
+      form.style.display = "block";
+      view.style.display = "none";
+    }
+
+    document.getElementById("save").onclick = () => {
+      nameErr.textContent = "";
+      emailErr.textContent = "";
+      let valid = true;
+      if (!name.value.trim()) {
+        nameErr.textContent = "Ad boş ola bilməz";
+        valid = false;
+      }
+      if (!email.value.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+        emailErr.textContent = "E-poçt düzgün deyil";
+        valid = false;
+      }
+      if (!valid) return;
+
+      let data = {
+        name: name.value,
+        email: email.value,
+        date: date.value,
+        desc: desc.value
+      };
+      localStorage.setItem("form", JSON.stringify(data));
+      form.style.display = "none";
+      view.style.display = "block";
+      renderData(data);
+    };
+
+    document.getElementById("reset").onclick = () => {
+      localStorage.removeItem("form");
+      location.reload();
+    };
+
+    loadData();
+  </script>
+
+</body>
+</html>
